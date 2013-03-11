@@ -216,7 +216,8 @@ public class BitmapLruCache {
 	 * @param decodeOpts - Options used for decoding the contents from the disk
 	 *            cache only.
 	 */
-	public CacheableBitmapDrawable get(String url, BitmapFactory.Options decodeOpts) {
+	//public CacheableBitmapDrawable get(String url, BitmapFactory.Options decodeOpts) {
+    public CacheableBitmapDrawable get(String url, Integer maxWidth) {
 		CacheableBitmapDrawable result = null;
 
 		// First try Memory Cache
@@ -224,7 +225,8 @@ public class BitmapLruCache {
 
 		if (null == result) {
 			// Memory Cache failed, so try Disk Cache
-			result = getFromDiskCache(url, decodeOpts);
+			//result = getFromDiskCache(url, decodeOpts);
+            result = getFromDiskCache(url, maxWidth);
 		}
 
 		return result;
@@ -245,16 +247,26 @@ public class BitmapLruCache {
 	 * @return Value for {@code url} from disk cache, or {@code null} if the
 	 *         disk cache is not enabled.
 	 */
-	public CacheableBitmapDrawable getFromDiskCache(final String url, final BitmapFactory.Options decodeOpts) {
+	//public CacheableBitmapDrawable getFromDiskCache(final String url, final BitmapFactory.Options decodeOpts) {
+    public CacheableBitmapDrawable getFromDiskCache(final String url, final Integer maxWidth)
 		CacheableBitmapDrawable result = null;
 
 		if (null != mDiskCache) {
 			checkNotOnMainThread();
 
 			try {
+                BitmapFactory.Options decodeOpts = new BitmapFactory.Options();
 				final String key = transformUrlForDiskCacheKey(url);
 				DiskLruCache.Snapshot snapshot = mDiskCache.get(key);
 				if (null != snapshot) {
+                    if (maxWidth != null) {
+                        decodeOpts.inJustDecodeBounds = true;
+                        BitmapFactory.decodeStream(snapshot.getInputStream(0), null, decodeOpts);
+                
+                        decodeOpts.inSampleSize = calculateInSampleSize(decodeOpts, maxWidth, 200) * 2;
+                        decodeOpts.inJustDecodeBounds = false;+                        android.util.Log.d("xiaoym", "update decodeOpts inSampleSize:" + decodeOpts.inSampleSize);
+                    }
+
 					// Try and decode bitmap
 					Bitmap bitmap = BitmapFactory.decodeStream(snapshot.getInputStream(0), null, decodeOpts);
 
@@ -392,9 +404,12 @@ public class BitmapLruCache {
 	 *            is cached in the disk cache (if enabled).
 	 * @return CacheableBitmapDrawable which can be used to display the bitmap.
 	 */
-	public CacheableBitmapDrawable put(final String url, final InputStream inputStream,
-			final BitmapFactory.Options decodeOpts) {
+//	public CacheableBitmapDrawable put(final String url, final InputStream inputStream,
+//			final BitmapFactory.Options decodeOpts) {
+	public CacheableBitmapDrawable put(final String url, final InputStream inputStream, Integer maxWidth) {
 		checkNotOnMainThread();
+
+         BitmapFactory.Options decodeOpts = new BitmapFactory.Options();
 
 		// First we need to save the stream contents to a temporary file, so it
 		// can be read multiple times
@@ -418,6 +433,14 @@ public class BitmapLruCache {
 		CacheableBitmapDrawable d = null;
 
 		if (null != tmpFile) {
+            if (maxWidth != null) {
+                decodeOpts.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(tmpFile.getAbsolutePath(), decodeOpts);
+                
+                decodeOpts.inSampleSize = calculateInSampleSize(decodeOpts, maxWidth, 300);
+                decodeOpts.inJustDecodeBounds = false;
+            }
+
 			// Try and decode File
 			Bitmap bitmap = BitmapFactory.decodeFile(tmpFile.getAbsolutePath(), decodeOpts);
 
@@ -434,7 +457,8 @@ public class BitmapLruCache {
 					lock.lock();
 					try {
 						DiskLruCache.Editor editor = mDiskCache.edit(transformUrlForDiskCacheKey(url));
-						Util.copy(tmpFile, editor.newOutputStream(0));
+						//Util.copy(tmpFile, editor.newOutputStream(0));
+                        Util.saveBitmap(bitmap, editor.newOutputStream(0));
 						editor.commit();
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -754,4 +778,21 @@ public class BitmapLruCache {
 			}
 		}
 	}
+
+    private int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            if (width > height) {
+                inSampleSize = Math.round((float) height / (float) reqHeight);
+            } else {
+                inSampleSize = Math.round((float) width / (float) reqWidth);
+            }
+        }
+
+        return inSampleSize;
+    }
 }
