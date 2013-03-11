@@ -248,7 +248,7 @@ public class BitmapLruCache {
 	 *         disk cache is not enabled.
 	 */
 	//public CacheableBitmapDrawable getFromDiskCache(final String url, final BitmapFactory.Options decodeOpts) {
-    public CacheableBitmapDrawable getFromDiskCache(final String url, final Integer maxWidth)
+    public CacheableBitmapDrawable getFromDiskCache(final String url, final Integer maxWidth) {
 		CacheableBitmapDrawable result = null;
 
 		if (null != mDiskCache) {
@@ -264,7 +264,7 @@ public class BitmapLruCache {
                         BitmapFactory.decodeStream(snapshot.getInputStream(0), null, decodeOpts);
                 
                         decodeOpts.inSampleSize = calculateInSampleSize(decodeOpts, maxWidth, 200) * 2;
-                        decodeOpts.inJustDecodeBounds = false;+                        android.util.Log.d("xiaoym", "update decodeOpts inSampleSize:" + decodeOpts.inSampleSize);
+                        decodeOpts.inJustDecodeBounds = false;
                     }
 
 					// Try and decode bitmap
