@@ -169,11 +169,13 @@ public class CacheableBitmapDrawable extends BitmapDrawable {
 	}
 
     private void checkCallback() {
+        /*
         if (!(getCallback() instanceof CacheableImageView)) {
             mRecyclePolicy = BitmapLruCache.RecyclePolicy.DISABLED;
             Log.w(LOG_TAG,
                     "CacheableBitmapDrawable should only be used with CacheableImageView. Turning off all recycling functionality");
         }
+        */
     }
 
 	/**
