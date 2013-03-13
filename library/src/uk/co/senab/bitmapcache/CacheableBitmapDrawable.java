@@ -17,6 +17,7 @@ package uk.co.senab.bitmapcache;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Canvas;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
